@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة صح أو خطأ - لوحة المنازل ضمن الملايين</title>
+<style>
+  body { font-family: "Tahoma", sans-serif; text-align: center; background: #f8fbff; }
+  h1 { color: #2a4d69; }
+  #game, #certificate { display: none; }
+  .btn { margin: 10px; padding: 10px 20px; font-size: 20px; cursor: pointer; border: none; border-radius: 8px; }
+  .true-btn { background: #4CAF50; color: white; }
+  .false-btn { background: #f44336; color: white; }
+  #feedback { font-size: 22px; margin: 15px; height: 30px; }
+  #progress { margin: 15px; }
+  #timer { font-size: 22px; color: #d32f2f; }
+  #certificate { border: 3px solid #2a4d69; padding: 20px; margin: 20px auto; width: 80%; background: #e0f7fa; border-radius: 12px; }
+</style>
+</head>
+<body>
+
+<h1>لعبة صح أو خطأ - لوحة المنازل ضمن الملايين</h1>
+
+<div id="start">
+  <input type="text" id="studentName" placeholder="ادخل اسمك">
+  <button onclick="startGame()">ابدأ اللعبة</button>
+</div>
+
+<div id="game">
+  <h2>السؤال <span id="currentQ">1</span> من 10</h2>
+  <p id="timer">⏳ 30 ثانية</p>
+  <p id="questionText"></p>
+  <button class="btn true-btn" onclick="checkAnswer(true)">صح</button>
+  <button class="btn false-btn" onclick="checkAnswer(false)">خطأ</button>
+  <div id="feedback"></div>
+  <div id="progress">النقاط: <span id="score">0</span></div>
+</div>
+
+<div id="certificate">
+  <h2>🏆 شهادة شكر وتقدير 🏆</h2>
+  <p>الطالب: <span id="certName"></span></p>
+  <p>النقاط: <span id="certScore"></span> من 100</p>
+  <p>المستوى: <span id="certLevel"></span></p>
+</div>
+
+<script>
+let studentName = "";
+let score = 0;
+let current = 0;
+let timeLeft = 30;
+let timer;
+
+const questions = [
+  {q: "في العدد 4,230,189 الرقم 4 في منزلة الملايين.", a: true},
+  {q: "في العدد 7,654,321 الرقم 6 في منزلة مئات الألوف.", a: false},
+  {q: "في العدد 5,678,901 قيمة الرقم 6 هي 600,000.", a: true},
+  {q: "في العدد 3,450,678 قيمة الرقم 5 هي 5,000.", a: false},
+  {q: "العدد 4,321,789 يكتب بالصيغة التحليلية: 4,000,000 + 300,000 + 20,000 + 1,000 + 700 + 80 + 9.", a: true},
+  {q: "العدد 6,543,210 يكتب بالصيغة التحليلية: 6,000,000 + 500,000 + 40,000 + 3,000 + 200 + 1.", a: false},
+  {q: "العدد 7,000,000 يقرأ: سبعة ملايين.", a: true},
+  {q: "العدد 2,345,678 يقرأ: مليونان وثلاثة وأربعون ألفًا وخمسمئة وثمانية وسبعون.", a: false},
+  {q: "العدد 4,321,789 أكبر من العدد 4,231,789.", a: true},
+  {q: "العدد 6,543,210 أصغر من العدد 6,453,210.", a: false}
+];
+
+// بدء اللعبة
+function startGame() {
+  studentName = document.getElementById('studentName').value.trim();
+  if(!studentName){ alert("ادخل اسمك أولاً"); return; }
+  document.getElementById('start').style.display = "none";
+  document.getElementById('game').style.display = "block";
+  showQuestion();
+}
+
+// عرض السؤال
+function showQuestion(){
+  if(current >= questions.length){
+    showCertificate();
+    return;
+  }
+  document.getElementById('currentQ').textContent = current + 1;
+  document.getElementById('questionText').textContent = questions[current].q;
+  document.getElementById('feedback').textContent = "";
+  startTimer();
+}
+
+// فحص الإجابة
+function checkAnswer(ans){
+  clearInterval(timer);
+
+  if(ans === questions[current].a){
+    document.getElementById('feedback').textContent = "أبدعت ✅";
+    document.getElementById('feedback').style.color = "green";
+    score += 10;
+    document.getElementById('score').textContent = score;
+    playSound("correct");
+  } else {
+    document.getElementById('feedback').textContent = "الجواب خاطئ ❌";
+    document.getElementById('feedback').style.color = "red";
+    playSound("wrong");
+  }
+
+  setTimeout(()=>{
+    current++;
+    showQuestion();
+  }, 900);
+}
+
+// مؤقت 30 ثانية
+function startTimer(){
+  timeLeft = 30;
+  document.getElementById('timer').textContent = "⏳ " + timeLeft + " ثانية";
+  timer = setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timer').textContent = "⏳ " + timeLeft + " ثانية";
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      document.getElementById('feedback').textContent = "انتهى الوقت ❌";
+      document.getElementById('feedback').style.color = "red";
+      playSound("wrong");
+      setTimeout(()=>{
+        current++;
+        showQuestion();
+      }, 800);
+    }
+  },1000);
+}
+
+// عرض الشهادة
+function showCertificate(){
+  document.getElementById('game').style.display = "none";
+  document.getElementById('certificate').style.display = "block";
+  document.getElementById('certName').textContent = studentName;
+  document.getElementById('certScore').textContent = score;
+  const level = score >= 90 ? "ممتاز 🌟" : score >= 70 ? "جيد جدًا ⭐⭐" : "تحتاج لمراجعة 📘";
+  document.getElementById('certLevel').textContent = level;
+  playSound("applause");
+}
+
+// أصوات بسيطة بالـ Web Audio API
+function playSound(type){
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  if(type==="correct"){ osc.frequency.value = 600; gain.gain.value = 0.2; }
+  if(type==="wrong"){ osc.frequency.value = 150; gain.gain.value = 0.3; }
+  if(type==="applause"){ osc.frequency.value = 400; gain.gain.value = 0.2; }
+
+  osc.type = "sine";
+  osc.start();
+  osc.stop(ctx.currentTime + (type==="applause" ? 1.2 : 0.4));
+}
+</script>
+
+</body>
+</html>
+10:28 PM 9/4/2025
